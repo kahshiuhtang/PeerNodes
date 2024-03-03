@@ -14,7 +14,7 @@ type NameStore interface {
 
 type FileStore interface {
 	GetFile(string) ([]byte, error)
-	PutFile([]byte)
+	PutFile([]byte) string
 }
 
 type NameMap struct {
@@ -44,8 +44,10 @@ func (ds *DataStore) GetFile(hash_val string) ([]byte, error) {
 	return data, nil
 }
 
-func (ds *DataStore) PutFile(data []byte) {
+func (ds *DataStore) PutFile(data []byte) string {
 	checksum := sha256.Sum256(data)
 	hash_val := string(checksum[:])
 	os.WriteFile(hash_val, data, 0444)
+
+	return hash_val
 }
