@@ -285,8 +285,9 @@ func startCLI() {
 				continue
 			}
 			val, ok := file_hash_mappings["foo"]
+			var best_candidate *pb.StorageIP
 			if ok {
-				cl.RequestFileFromMarket(client, val)
+				best_candidate = cl.RequestFileFromMarket(client, val)
 			} else {
 				fmt.Println("Enter in file description in following format")
 				fmt.Println("<FileNameHash> <FileName> <FileSizeBytes> <MaxFilePayment>")
@@ -303,9 +304,10 @@ func startCLI() {
 					continue
 				}
 				args := inputs[1:]
-				if len(args) != 3 {
+				if len(args) != 4 {
 					continue
 				}
+				file_name_hash := args[0]
 				file_byte_size, err := strconv.Atoi(args[2])
 				if err != nil {
 					fmt.Println("Error converting string to integer.")
@@ -317,7 +319,7 @@ func startCLI() {
 					continue
 				}
 				byteArray := []byte("")
-				fileData := pb.FileDesc{FileNameHash: args[0],
+				fileData := pb.FileDesc{FileNameHash: file_name_hash,
 					FileName:          args[1],
 					FileSizeBytes:     int64(file_byte_size),
 					FileOriginAddress: origin_ip.String(),
@@ -326,11 +328,11 @@ func startCLI() {
 					FileDataHash:      "",
 					FileBytes:         byteArray}
 
-				cl.RequestFileFromMarket(client, &fileData)
+				best_candidate = cl.RequestFileFromMarket(client, &fileData)
 				file_hash_mappings[args[0]] = &fileData
 			}
 			if len(args) == 3 {
-				getFileOnce(args[0], args[1], args[2])
+				getFileOnce(best_candidate.IpAddress, best_candidate.IpPort, args[2])
 			} else {
 				fmt.Println("Usage: get <ip> <port> <filename>")
 				fmt.Println()

@@ -63,10 +63,11 @@ message FileDesc{
 
 message StorageIP{
     bool success = 1;
-    string address = 2;
-    string user_id = 3;
-    string file_name = 4;
-    int64 file_byte_size = 5;
-    float file_cost = 6;
-    bool is_last_candidate = 7;
+    string ip_address = 2;
+    string ip_port = 3;
+    string user_id = 4;
+    string file_name = 5;
+    int64 file_byte_size = 6;
+    float file_cost = 7;
+    bool is_last_candidate = 8;
 }
