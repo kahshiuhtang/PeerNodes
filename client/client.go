@@ -33,9 +33,9 @@ func RequestFileFromMarket(client pb.FileShareClient, fileDesc *pb.FileDesc) *pb
 			log.Fatalf("client.ListFeatures failed: %v", err)
 		}
 		log.Printf("File %s found on address: %s for the cost of %f",
-			storage_ip.FileName, storage_ip.Address, storage_ip.FileCost)
+			storage_ip.FileName, storage_ip.IpAddress, storage_ip.FileCost)
 		possible_candidates = append(possible_candidates, storage_ip)
-		if storage_ip.IsLastCandidate == true {
+		if storage_ip.IsLastCandidate {
 			break
 		}
 	}

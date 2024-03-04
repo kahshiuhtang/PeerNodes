@@ -238,7 +238,7 @@ func NotifyUnstoreWrapper(client pb.FileShareClient, file_name_hash string, file
 	}
 }
 
-func setupProducer(gRPCPort int, httpPort int) *fileShareServerNode {
+func SetupProducer(gRPCPort int, httpPort int) *fileShareServerNode {
 	s := &fileShareServerNode{savedFiles: make(map[string][]*pb.FileDesc)}
 	// s.loadMappings(*jsonDBFile) // Have a load and save mappings
 	http.HandleFunc("/file", sendFileToConsumer)

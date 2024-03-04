@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	cl "peer-node/client"
 	pb "peer-node/fileshare"
+	sv "peer-node/server"
 	"strconv"
 	"strings"
 )
@@ -23,6 +24,7 @@ const keyServerAddr = "serverAddr"
 
 var (
 	client             = cl.SetupClient()
+	server             = sv.SetupProducer(8081, 8082) //need to setup
 	file_hash_mappings = make(map[string]*pb.FileDesc)
 	market_ip          = ""
 	market_port        = ""
@@ -90,6 +92,11 @@ func sendFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+	fileInfo, err := os.Stat("./files/stored/" + filename)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// Set content type
 	contentType := "application/octet-stream"
@@ -112,6 +119,7 @@ func sendFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("\nFile %s sent!\n", filename)
+	sv.RecordTransactionWrapper(client, fileInfo.Size(), filename, 0, "", "", "", 100)
 }
 
 func storeFile(w http.ResponseWriter, r *http.Request) {
@@ -344,6 +352,13 @@ func startCLI() {
 				fmt.Println("Usage: store <ip> <port> <filename>")
 				fmt.Println()
 			}
+		case "unstore":
+			if len(args) == 3 {
+				requestStorage(args[0], args[1], args[2])
+			} else {
+				fmt.Println("Usage: store <ip> <port> <filename>")
+				fmt.Println()
+			}
 		case "list":
 			// TO-DO
 		case "exit":
@@ -353,6 +368,7 @@ func startCLI() {
 			fmt.Println("COMMANDS:")
 			fmt.Println(" get <ip> <port> <filename>     Request a file")
 			fmt.Println(" store <ip> <port> <filename>   Request storage of a file")
+			fmt.Println(" unstore <ip> <port> <filename>   Request storage of a file")
 			fmt.Println(" list                           List all files you are storing")
 			fmt.Println(" exit                           Exit the program")
 			fmt.Println()
