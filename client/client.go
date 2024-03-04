@@ -73,12 +73,7 @@ func RequestFileFromProducer(baseURL string, filename string) bool {
 	return false
 }
 
-var (
-	marketAddr = flag.String("addr", "localhost:50051", "The market address in the format of host:port")
-)
-
-func main() {
-	flag.Parse()
+func SetupClient() pb.FileShareClient {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(*marketAddr, opts...)
@@ -86,6 +81,10 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 	defer conn.Close()
-	// client := pb.NewFileShareClient(conn)
-
+	client := pb.NewFileShareClient(conn)
+	return client
 }
+
+var (
+	marketAddr = flag.String("addr", "localhost:50051", "The market address in the format of host:port")
+)

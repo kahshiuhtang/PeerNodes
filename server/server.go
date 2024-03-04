@@ -188,15 +188,6 @@ func runNotifyUnstore(client pb.FileShareClient, file *pb.FileDesc) *fileshare.S
 	return ackResponse
 }
 
-/*
-int64 file_byte_size = 1;
-string file_hash_name = 2;
-float currency_exchanged = 3;
-string sender_id = 4;
-string reciever_id = 5;
-string file_ip_location = 6;
-int64 seconds_timeout = 7;
-*/
 func RecordTransactionWrapper(client pb.FileShareClient, file_size int64, file_hash_name string, cost float64, sender_id string, receiver_id string, file_ip_location string, seconds_timeout int64) {
 	var transaction = pb.FileRequestTransaction{FileByteSize: file_size,
 		FileHashName:      file_hash_name,
@@ -214,16 +205,6 @@ func RecordTransactionWrapper(client pb.FileShareClient, file_size int64, file_h
 	}
 }
 
-/*
-string file_name_hash = 1;
-string file_name = 2;
-int64 file_size_bytes = 3;
-string file_origin_address = 4;
-string origin_user_id = 5;
-float file_cost = 6;
-string file_data_hash = 7;
-bytes file_bytes = 8;
-*/
 func NotifyStoreWrapper(client pb.FileShareClient, file_name_hash string, file_name string, file_size_bytes int64, file_origin_address string, origin_user_id string, file_cost float32, file_data_hash string, file_bytes []byte) {
 	var file_description = pb.FileDesc{FileNameHash: file_name_hash,
 		FileName:          file_name,

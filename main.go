@@ -8,14 +8,26 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	cl "peer-node/client"
+	pb "peer-node/fileshare"
+	"strconv"
 	"strings"
 )
 
 const keyServerAddr = "serverAddr"
+
+var (
+	client             = cl.SetupClient()
+	file_hash_mappings = make(map[string]*pb.FileDesc)
+	market_ip          = ""
+	market_port        = ""
+	origin_ip          = GetOutboundIP()
+)
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /root request\n")
@@ -231,6 +243,17 @@ func startServer(port string, serverReady chan<- bool) {
 	serverReady <- true
 	http.ListenAndServe(":"+port, nil)
 }
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
 
 // Start CLI
 func startCLI() {
@@ -257,6 +280,55 @@ func startCLI() {
 
 		switch command {
 		case "get":
+			if market_ip == "" || market_port == "" {
+				fmt.Println("Error, market ip and market port need to be set with market command")
+				continue
+			}
+			val, ok := file_hash_mappings["foo"]
+			if ok {
+				cl.RequestFileFromMarket(client, val)
+			} else {
+				fmt.Println("Enter in file description in following format")
+				fmt.Println("<FileNameHash> <FileName> <FileSizeBytes> <MaxFilePayment>")
+
+				text, err := reader.ReadString('\n')
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
+					continue
+				}
+
+				text = strings.TrimSpace(text)
+				inputs := strings.Fields(text)
+				if len(inputs) == 0 {
+					continue
+				}
+				args := inputs[1:]
+				if len(args) != 3 {
+					continue
+				}
+				file_byte_size, err := strconv.Atoi(args[2])
+				if err != nil {
+					fmt.Println("Error converting string to integer.")
+					continue
+				}
+				file_cost, err := strconv.ParseFloat(args[3], 32)
+				if err != nil {
+					fmt.Println("Error converting string to float.")
+					continue
+				}
+				byteArray := []byte("")
+				fileData := pb.FileDesc{FileNameHash: args[0],
+					FileName:          args[1],
+					FileSizeBytes:     int64(file_byte_size),
+					FileOriginAddress: origin_ip.String(),
+					OriginUserId:      "", //CHANGE LATER
+					FileCost:          float32(file_cost),
+					FileDataHash:      "",
+					FileBytes:         byteArray}
+
+				cl.RequestFileFromMarket(client, &fileData)
+				file_hash_mappings[args[0]] = &fileData
+			}
 			if len(args) == 3 {
 				getFileOnce(args[0], args[1], args[2])
 			} else {
@@ -282,6 +354,15 @@ func startCLI() {
 			fmt.Println(" list                           List all files you are storing")
 			fmt.Println(" exit                           Exit the program")
 			fmt.Println()
+		case "market":
+			if len(args) == 2 {
+				market_ip = args[0]
+				market_port = args[1]
+				fmt.Println("Updated market address")
+			} else {
+				fmt.Println("Usage: market <ip> <port>")
+				fmt.Println()
+			}
 		default:
 			fmt.Println("Unknown command. Type 'help' for available commands.")
 			fmt.Println()
@@ -293,7 +374,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", getRoot)
 	mux.HandleFunc("/requestFile", getFile)
-
 	ctx := context.Background()
 	server := &http.Server{
 		Addr:    ":3333",
