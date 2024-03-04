@@ -8,4 +8,5 @@
 !server/
 !client/
 !file_hash/
+!util/
 !rsrc/
